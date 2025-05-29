@@ -1,4 +1,6 @@
-document.getElementById('convertBtn').addEventListener('click', convertNumber);
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('convertBtn').addEventListener('click', convertNumber);
+});
 
 function convertNumber() {
     const inputValue = document.getElementById('inputValue').value.trim();
@@ -13,20 +15,17 @@ function convertNumber() {
         return;
     }
     
-    // Validar o valor de entrada de acordo com a base
     if (!isValidInput(inputValue, fromBase)) {
         showError(`O valor digitado não é válido para a base ${fromBase}.`);
         return;
     }
     
-    // Se a base de origem e destino forem iguais
     if (fromBase === toBase) {
         document.getElementById('result').value = inputValue;
         addStep(`A base de origem e destino são iguais (Base ${fromBase}), portanto o valor permanece o mesmo.`);
         return;
     }
     
-    // Converter para decimal como passo intermediário (exceto se a origem já for decimal)
     let decimalValue;
     let steps = [];
     
@@ -38,17 +37,14 @@ function convertNumber() {
         addStep(`Valor decimal inicial: ${decimalValue}`);
     }
     
-    // Se o destino for decimal, já terminamos
     if (toBase === 10) {
         document.getElementById('result').value = decimalValue.toString();
         return;
     }
     
-    // Converter do decimal para a base de destino
     const result = convertFromDecimal(decimalValue, toBase, steps);
     document.getElementById('result').value = result;
     
-    // Mostrar todos os passos
     steps.forEach(step => addStep(step));
 }
 
@@ -59,7 +55,6 @@ function isValidInput(value, base) {
         10: /^-?\d+$/,
         16: /^[0-9a-fA-F]+$/
     };
-    
     return validChars[base].test(value);
 }
 
@@ -68,39 +63,32 @@ function convertToDecimal(value, fromBase, steps) {
     let decimal = 0;
     const digits = value.split('').reverse();
     
-    steps.push(`Conversão de Base ${fromBase} para Decimal (Base 10):`);
-    steps.push(`Valor original: ${value}`);
+    steps.push(`<strong>Conversão de Base ${fromBase} para Decimal (Base 10):</strong>`);
+    steps.push(`Valor original: <code>${value}</code>`);
     steps.push(`Separando cada dígito e enumerando posições começando de 0 da direita para esquerda:`);
     
     let calculationParts = [];
     
     for (let i = 0; i < digits.length; i++) {
-        let digitValue;
-        if (fromBase === 16) {
-            digitValue = parseInt(digits[i], 16);
-        } else {
-            digitValue = parseInt(digits[i]);
-        }
-        
+        let digitValue = parseInt(digits[i], fromBase);
         const power = Math.pow(fromBase, i);
         const term = `${digitValue} × ${fromBase}^${i} = ${digitValue * power}`;
-        calculationParts.unshift(term); // Adiciona no início para manter a ordem original
-        
+        calculationParts.unshift(term);
         decimal += digitValue * power;
     }
     
-    // Mostrar os termos em ordem original (da esquerda para direita)
-    steps.push(...calculationParts.map((term, idx) => `Posição ${digits.length - 1 - idx}: ${term}`));
+    steps.push(...calculationParts.map((term, idx) => 
+        `Posição ${digits.length - 1 - idx}: ${term}`));
     
-    steps.push(`Somando todos os termos: ${decimal}`);
-    steps.push(`Resultado em decimal: ${decimal}`);
+    steps.push(`<strong>Somando todos os termos:</strong> ${decimal}`);
+    steps.push(`<strong>Resultado em decimal:</strong> ${decimal}`);
     
     return decimal;
 }
 
 function convertFromDecimal(decimalValue, toBase, steps) {
-    steps.push(`<br>Conversão de Decimal (Base 10) para Base ${toBase}:`);
-    steps.push(`Valor decimal: ${decimalValue}`);
+    steps.push(`<br><strong>Conversão de Decimal (Base 10) para Base ${toBase}:</strong>`);
+    steps.push(`Valor decimal: <code>${decimalValue}</code>`);
     steps.push(`Dividindo sucessivamente por ${toBase} e registrando os restos:`);
     
     let value = decimalValue;
@@ -112,26 +100,19 @@ function convertFromDecimal(decimalValue, toBase, steps) {
         while (value > 0) {
             const remainder = value % toBase;
             const quotient = Math.floor(value / toBase);
-            
             steps.push(`${value} ÷ ${toBase} = ${quotient} com resto ${remainder}`);
-            
             remainders.push(remainder);
             value = quotient;
         }
     }
     
-    // Converter restos para a base correta (especialmente para hexadecimal)
-    const convertedRemainders = remainders.map(r => {
-        if (toBase === 16) {
-            return r.toString(16).toUpperCase();
-        }
-        return r.toString();
-    });
+    const convertedRemainders = remainders.map(r => 
+        toBase === 16 ? r.toString(16).toUpperCase() : r.toString());
     
-    steps.push(`Restos coletados em ordem inversa: ${convertedRemainders.reverse().join(', ')}`);
+    steps.push(`<strong>Restos coletados em ordem inversa:</strong> ${convertedRemainders.reverse().join(', ')}`);
     
     const result = convertedRemainders.reverse().join('');
-    steps.push(`Resultado final (lendo os restos de baixo para cima): ${result}`);
+    steps.push(`<strong>Resultado final</strong> (lendo os restos de baixo para cima): <code>${result}</code>`);
     
     return result;
 }
@@ -145,6 +126,8 @@ function addStep(stepText) {
 
 function showError(message) {
     document.getElementById('result').value = '';
-    document.getElementById('conversionSteps').innerHTML = 
-        `<div class="step error">${message}</div>`;
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'step error';
+    errorDiv.textContent = message;
+    document.getElementById('conversionSteps').appendChild(errorDiv);
 }

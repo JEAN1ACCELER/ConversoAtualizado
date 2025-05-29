@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Conversão de Bases</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        
+        .calculator {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .input-section, .output-section {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        select, input, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .steps {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 5px;
+            grid-column: span 2;
+        }
+        
+        .steps h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .step {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 600px) {
+            .calculator {
+                grid-template-columns: 1fr;
+            }
+            
+            .steps {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Conversão de Bases Numéricas</h1>
+        
+        <div class="calculator">
+            <div class="input-section">
+                <label for="inputValue">Valor de Entrada:</label>
+                <input type="text" id="inputValue" placeholder="Digite o valor">
+                
+                <label for="fromBase">Base de Origem:</label>
+                <select id="fromBase">
+                    <option value="2">Binário (Base 2)</option>
+                    <option value="8">Octal (Base 8)</option>
+                    <option value="10" selected>Decimal (Base 10)</option>
+                    <option value="16">Hexadecimal (Base 16)</option>
+                </select>
+                
+                <label for="toBase">Base de Destino:</label>
+                <select id="toBase">
+                    <option value="2">Binário (Base 2)</option>
+                    <option value="8">Octal (Base 8)</option>
+                    <option value="10">Decimal (Base 10)</option>
+                    <option value="16" selected>Hexadecimal (Base 16)</option>
+                </select>
+                
+                <button id="convertBtn">Converter</button>
+            </div>
+            
+            <div class="output-section">
+                <label for="result">Resultado:</label>
+                <input type="text" id="result" readonly>
+                
+                <div id="binaryRepresentation" class="step"></div>
+                <div id="intermediateSteps"></div>
+            </div>
+            
+            <div class="steps">
+                <h3>Passo a Passo da Conversão</h3>
+                <div id="conversionSteps"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('convertBtn').addEventListener('click', convertNumber);
+        
+        function convertNumber() {
+            const inputValue = document.getElementById('inputValue').value.trim();
+            const fromBase = parseInt(document.getElementById('fromBase').value);
+            const toBase = parseInt(document.getElementById('toBase').value);
+            
+            const stepsContainer = document.getElementById('conversionSteps');
+            stepsContainer.innerHTML = '';
+            
+            if (!inputValue) {
+                showError("Por favor, digite um valor para converter.");
+                return;
+            }
+            
+            S
+            if (!isValidInput(inputValue, fromBase)) {
+                showError(`O valor digitado não é válido para a base ${fromBase}.`);
+                return;
+            }
+            
+            
+            if (fromBase === toBase) {
+                document.getElementById('result').value = inputValue;
+                addStep(`A base de origem e destino são iguais (Base ${fromBase}), portanto o valor permanece o mesmo.`);
+                return;
+            }
+            
+            
+            let decimalValue;
+            let steps = [];
+            
+            if (fromBase !== 10) {
+                decimalValue = convertToDecimal(inputValue, fromBase, steps);
+                if (decimalValue === null) return;
+            } else {
+                decimalValue = parseInt(inputValue, 10);
+                addStep(`Valor decimal inicial: ${decimalValue}`);
+            }
+            
+            
+            if (toBase === 10) {
+                document.getElementById('result').value = decimalValue.toString();
+                return;
+            }
+            
+           
+            const result = convertFromDecimal(decimalValue, toBase, steps);
+            document.getElementById('result').value = result;
+            
+           
+            steps.forEach(step => addStep(step));
+        }
+        
+        function isValidInput(value, base) {
+            const validChars = {
+                2: /^[01]+$/,
+                8: /^[0-7]+$/,
+                10: /^-?\d+$/,
+                16: /^[0-9a-fA-F]+$/
+            };
+            
+            return validChars[base].test(value);
+        }
+        
+        function convertToDecimal(value, fromBase, steps) {
+            value = value.toUpperCase();
+            let decimal = 0;
+            const digits = value.split('').reverse();
+            
+            steps.push(`Conversão de Base ${fromBase} para Decimal (Base 10):`);
+            steps.push(`Valor original: ${value}`);
+            steps.push(`Separando cada dígito e enumerando posições começando de 0 da direita para esquerda:`);
+            
+            let calculationParts = [];
+            
+            for (let i = 0; i < digits.length; i++) {
+                let digitValue;
+                if (fromBase === 16) {
+                    digitValue = parseInt(digits[i], 16);
+                } else {
+                    digitValue = parseInt(digits[i]);
+                }
+                
+                const power = Math.pow(fromBase, i);
+                const term = `${digitValue} × ${fromBase}^${i} = ${digitValue * power}`;
+                calculationParts.unshift(term); 
+                
+                decimal += digitValue * power;
+            }
+            
+            steps.push(...calculationParts.map((term, idx) => `Posição ${digits.length - 1 - idx}: ${term}`));
+            
+            steps.push(`Somando todos os termos: ${decimal}`);
+            steps.push(`Resultado em decimal: ${decimal}`);
+            
+            return decimal;
+        }
+        
+        function convertFromDecimal(decimalValue, toBase, steps) {
+            steps.push(`<br>Conversão de Decimal (Base 10) para Base ${toBase}:`);
+            steps.push(`Valor decimal: ${decimalValue}`);
+            steps.push(`Dividindo sucessivamente por ${toBase} e registrando os restos:`);
+            
+            let value = decimalValue;
+            let remainders = [];
+            
+            if (value === 0) {
+                remainders = [0];
+            } else {
+                while (value > 0) {
+                    const remainder = value % toBase;
+                    const quotient = Math.floor(value / toBase);
+                    
+                    steps.push(`${value} ÷ ${toBase} = ${quotient} com resto ${remainder}`);
+                    
+                    remainders.push(remainder);
+                    value = quotient;
+                }
+            }
+            
+            
+            const convertedRemainders = remainders.map(r => {
+                if (toBase === 16) {
+                    return r.toString(16).toUpperCase();
+                }
+                return r.toString();
+            });
+            
+            steps.push(`Restos coletados em ordem inversa: ${convertedRemainders.reverse().join(', ')}`);
+            
+            const result = convertedRemainders.reverse().join('');
+            steps.push(`Resultado final (lendo os restos de baixo para cima): ${result}`);
+            
+            return result;
+        }
+        
+        function addStep(stepText) {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'step';
+            stepDiv.innerHTML = stepText;
+            document.getElementById('conversionSteps').appendChild(stepDiv);
+        }
+        
+        function showError(message) {
+            document.getElementById('result').value = '';
+            document.getElementById('conversionSteps').innerHTML = 
+                `<div class="step error">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
